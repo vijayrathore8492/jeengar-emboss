@@ -33,6 +33,14 @@ hiddenimports = [
     "webview", "webview.platforms.cocoa", "webview.platforms.winforms", "webview.platforms.edgechromium",
     "webview.platforms.gtk", "clr", "clr_loader",
 ]
+if sys.platform.startswith("linux"):
+    # bundle GTK + WebKitGTK when PyGObject is present, so the AppImage gets the app window
+    try:
+        import gi  # noqa: F401
+        hiddenimports += ["gi", "gi.repository.GLib", "gi.repository.GObject", "gi.repository.Gio",
+                          "gi.repository.Gtk", "gi.repository.Gdk", "gi.repository.WebKit2", "gi.repository.Soup"]
+    except ImportError:
+        pass
 
 a = Analysis(
     [str(HERE / "emboss.py")],

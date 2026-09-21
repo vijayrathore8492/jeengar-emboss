@@ -36,14 +36,18 @@ Download from the [latest release](https://github.com/vijayrathore8492/jeengar-e
 | | File | First launch |
 |---|---|---|
 | macOS (Apple Silicon) | `JeengarEmboss-<v>-mac-arm64.dmg` | Drag to Applications. The app is not notarised: right-click → **Open** → Open, once. |
-| Windows 10/11 | `JeengarEmboss-<v>-windows.zip` | Unzip anywhere, run `Jeengar Emboss.exe`. SmartScreen: *More info → Run anyway*, once. Older Falcons need the CH340 USB driver. |
-| Linux (x86-64) | `JeengarEmboss-<v>-linux-x86_64.tar.gz` | Untar, run `./Jeengar\ Emboss`. `sudo usermod -aG dialout $USER`, log out and in. Needs WebKitGTK for the app window (`gir1.2-webkit2-4.1` on Ubuntu); without it the UI opens in your browser. |
+| Windows 10/11 | `JeengarEmboss-<v>-windows-setup.exe` | Run it: Next → Next → Finish. Start Menu and desktop icon, Add/Remove Programs entry. SmartScreen: *More info → Run anyway*, once. Older Falcons need the CH340 USB driver. (A plain `.zip` is also there if you prefer no installer.) |
+| Linux (x86-64) | `JeengarEmboss-<v>-linux-x86_64.AppImage` | One file: `chmod +x`, double-click. WebKitGTK is bundled. `sudo usermod -aG dialout $USER`, log out and in. (`.tar.gz` also available.) |
 
 Nothing else to install — Python and every library are inside the bundle.
 
 The app opens in its own window. Closing it releases the laser and quits.
 `Jeengar Emboss --browser` uses your browser instead; `--no-browser` runs the local server only.
-On start it checks GitHub for a newer release and says so under *Advanced*; nothing installs itself.
+
+**Updates.** On start the app checks GitHub. If there is a newer release a bar appears at the top:
+*Download* fetches the right file for this computer into Downloads and opens it — the Windows
+installer replaces the old version, the Mac dmg opens for you to drag over, an AppImage replaces
+itself in place. Nothing installs behind your back, and your data folder is never touched.
 
 Your data lives outside the app, so updates never touch it:
 `~/Library/Application Support/Jeengar Emboss` (macOS), `%APPDATA%\Jeengar Emboss` (Windows),

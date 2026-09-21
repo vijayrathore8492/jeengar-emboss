@@ -546,6 +546,9 @@ class Handler(BaseHTTPRequestHandler):
                 S.g.abort()
         S.say("stop requested")
 
+    def api_update_download(self, p):
+        return {"download": update.download()}
+
     def api_quit(self, p):
         """Close the app (the packaged Mac app has no terminal window to close)."""
         if S.busy and S.busy != "dot":

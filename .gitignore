@@ -8,3 +8,6 @@ machine.json
 assets/fonts/_old/
 .DS_Store
 /fonts/
+AppDir/
+appimagetool
+pkg/
