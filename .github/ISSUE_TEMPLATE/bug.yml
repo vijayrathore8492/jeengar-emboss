@@ -1,0 +1,22 @@
+name: Bug report
+description: Something burned wrong, crashed, or did not connect
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes: { label: App version, description: "Advanced → bottom line, e.g. 1.2.0" }
+    validations: { required: true }
+  - type: dropdown
+    id: os
+    attributes: { label: Operating system, options: [macOS, Windows, Linux] }
+    validations: { required: true }
+  - type: input
+    id: machine
+    attributes: { label: Laser, description: "e.g. Falcon 5W gen-1, firmware from Advanced → Machine" }
+  - type: textarea
+    id: what
+    attributes: { label: What happened, description: "Steps, what you expected, what you got. A photo of the leather helps." }
+    validations: { required: true }
+  - type: textarea
+    id: log
+    attributes: { label: Log, description: "Advanced → log, or out/emboss.log in the data folder", render: text }
