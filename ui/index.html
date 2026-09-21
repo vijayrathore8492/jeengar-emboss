@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Jeengar Emboss</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+@font-face{font-family:"Libre Bodoni";src:url(/fonts/LibreBodoni.ttf)}
+@font-face{font-family:"Raleway";src:url(/fonts/Raleway.ttf)}
+:root{--bg:#f4efe6;--card:#fffdf9;--ink:#2b2119;--mut:#7a6a5c;--line:#e3d9cb;--brand:#6b3f23;--ok:#2e7d4f;--warn:#b25a00;--bad:#b3261e;--soft:#f1e9dc}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Raleway,system-ui,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:12px 22px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
+header h1{font:400 21px "Libre Bodoni",serif;margin:0;letter-spacing:.05em}
+.status{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:14px}
+.status .dot{width:10px;height:10px;border-radius:50%;background:#bbb}
+.status.on .dot{background:var(--ok)}.status.off .dot{background:#bbb}.status.lost .dot{background:var(--bad)}
+.status.lost{color:var(--bad)}
+.status button{font-size:13px}
+main{display:grid;grid-template-columns:420px 1fr;gap:18px;padding:18px 22px;max-width:1380px}
+@media(max-width:940px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.step{display:flex;align-items:baseline;gap:10px;margin:0 0 10px}
+.step b{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font:600 13px Raleway;align-items:center;justify-content:center}
+.step h2{font:400 17px "Libre Bodoni",serif;margin:0;letter-spacing:.03em}
+label{display:block;font-size:12.5px;color:var(--mut);margin:10px 0 4px}
+input[type=text],input[type=number],select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit;color:var(--ink)}
+textarea{min-height:60px;resize:vertical}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{padding:8px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font:inherit;font-size:14px}
+.seg button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.seg button.def::after{content:" ·";color:#c9a26b}
+.seg button:disabled{opacity:.4;cursor:default}
+.hint{font-size:12.5px;color:var(--mut);margin-top:6px}
+.summary{font-size:13.5px;color:var(--mut);margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.summary a{color:var(--brand);cursor:pointer;text-decoration:underline}
+button.act{padding:10px 16px;border:0;border-radius:9px;cursor:pointer;font:600 14px Raleway,sans-serif;background:var(--soft);color:var(--ink)}
+button.act.primary{background:var(--brand);color:#fff}
+button.act.go{background:var(--ok);color:#fff;font-size:17px;padding:14px 30px;letter-spacing:.02em}
+button.act.stop{background:var(--bad);color:#fff}
+button.act:disabled{opacity:.4;cursor:not-allowed}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.preview{background:#fff;border:1px dashed var(--line);border-radius:10px;min-height:200px;display:flex;align-items:center;justify-content:center;padding:14px}
+.preview img{max-width:100%;image-rendering:pixelated}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px;margin-top:12px}
+.kv b{color:var(--mut);font-weight:500}
+.warn{color:var(--warn);font-size:13.5px;margin-top:6px}
+.err{color:var(--bad);font-size:13.5px;margin-top:6px}
+.notice{color:var(--warn);font-size:13.5px;margin-top:6px}
+.jogwrap{display:flex;gap:18px;align-items:center;margin-top:8px}
+.jog{display:grid;grid-template-columns:repeat(3,48px);gap:5px}
+.jog button{height:44px;border:1px solid var(--line);background:#fff;border-radius:9px;font-size:19px;cursor:pointer}
+.jog button.dotbtn{font-size:13px;font-weight:600}
+.jog button.dotbtn.on{background:#ffe9a8;border-color:#e0b74a}
+.bar{height:12px;background:#eee;border-radius:6px;overflow:hidden;margin:12px 0 6px}
+.bar div{height:100%;background:var(--ok);width:0;transition:width .4s}
+.confirm{background:#fff8e6;border:1px solid #e0b74a;border-radius:10px;padding:12px 14px;margin-top:12px;display:none}
+.confirm.show{display:block}
+details{margin-top:6px}
+details summary{cursor:pointer;color:var(--mut);font-size:13.5px}
+details.adv{border-top:1px solid var(--line);padding-top:10px;margin-top:14px}
+.log{font:12px/1.5 ui-monospace,Menlo,monospace;color:var(--mut);max-height:160px;overflow:auto;white-space:pre-wrap;margin-top:8px}
+.pill{font-size:11.5px;padding:2px 8px;border-radius:10px;background:#eee;color:var(--mut)}
+.pill.ok{background:#dff1e5;color:var(--ok)}
+.grid-legend{font:12px ui-monospace,Menlo,monospace;white-space:pre;margin-top:8px}
+.small{font-size:12.5px;color:var(--mut)}
+</style>
+</head>
+<body>
+<header>
+  <h1>JEENGAR &nbsp;·&nbsp; Emboss</h1>
+  <div class="status off" id="status"><span class="dot"></span><span id="conn-text">Laser off</span>
+    <select id="port" style="width:auto;display:none"></select>
+    <button class="act" id="btn-connect">Connect</button></div>
+</header>
+
+<main>
+<div>
+  <div class="card">
+    <div class="step"><b>1</b><h2>What to emboss</h2></div>
+    <div class="seg" id="srcseg"><button id="tab-text" class="on">Text</button><button id="tab-file">Logo or image</button></div>
+    <div id="pane-text">
+      <textarea id="text" placeholder="Type a name, initials, a line…">JEENGAR</textarea>
+      <div class="seg" id="emojiseg" style="margin-top:6px"><button id="btn-emoji" type="button">☺ Symbols &amp; emoji</button></div>
+      <div id="emojibox" style="display:none;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;line-height:2.1;font-size:22px"></div>
+      <div class="row">
+        <div style="flex:2"><label>Font</label><select id="font"></select></div>
+        <div><label>Weight</label><select id="weight"></select></div>
+      </div>
+      <div class="small" style="margin-top:6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <a id="lnk-addfont" style="color:var(--brand);cursor:pointer;text-decoration:underline">Add a font…</a>
+        <a id="lnk-fontsfolder" style="color:var(--brand);cursor:pointer;text-decoration:underline">Open my fonts folder</a>
+        <a id="lnk-rescan" style="color:var(--brand);cursor:pointer;text-decoration:underline">Rescan fonts</a>
+        <input type="file" id="fontfile" accept=".ttf,.otf" multiple style="display:none">
+        <span id="fontmsg"></span>
+      </div>
+      <div class="row">
+        <div><label>Align</label><select id="align"><option>center</option><option>left</option><option>right</option></select></div>
+        <div><label>Letter spacing</label><input type="number" id="letter_spacing" value="0" step="0.05" min="0" max="1"></div>
+      </div>
+    </div>
+    <div id="pane-file" style="display:none">
+      <label>PNG or SVG. Dark parts burn.</label>
+      <input type="file" id="fileinput" accept=".png,.svg,.jpg,.jpeg">
+      <label>Or a file used before</label>
+      <select id="file"></select>
+      <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="invert" style="width:auto"> Light artwork on dark background (invert)</label>
+    </div>
+    <label>Width on the leather (mm)</label>
+    <input type="number" id="width" value="45" min="5" max="380" step="1">
+  </div>
+
+  <div class="card">
+    <div class="step"><b>2</b><h2>Leather</h2></div>
+    <div class="row">
+      <div><label>Type</label><select id="leather"></select></div>
+      <div><label>Colour</label><select id="colour"></select></div>
+    </div>
+    <label>Look</label>
+    <div class="seg" id="toneseg"></div>
+    <div class="summary" id="tone-summary"></div>
+    <div class="row" style="margin-top:4px">
+      <div><label>Power %</label><input type="number" id="ov_power" min="1" max="100" step="1"></div>
+      <div><label>Speed</label><input type="number" id="ov_speed" min="100" max="10000" step="100" title="mm/min"></div>
+      <div><label>Lines/mm</label><input type="number" id="ov_lpm" min="4" max="20" step="1"></div>
+      <div><label>Passes</label><input type="number" id="ov_passes" min="1" max="5" step="1"></div>
+    </div>
+    <div class="row" style="align-items:flex-end">
+      <div><label>Mode</label><select id="ov_mode"><option value="binary">solid (logos, text)</option><option value="gray">shaded (photos)</option></select></div>
+      <div class="summary" style="margin:0 0 4px" id="edit-links"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step"><b>3</b><h2>Where</h2></div>
+    <div class="hint">Switch the aiming dot on, move the head with the arrows until the dot sits where the <b id="anchor-word">bottom-left corner</b> of the mark should be, then switch it off.</div>
+    <div class="jogwrap">
+      <div class="jog">
+        <span></span><button data-j="0,1" title="away from you">▲</button><span></span>
+        <button data-j="-1,0">◀</button><button id="dotbtn" class="dotbtn" title="aiming dot">DOT</button><button data-j="1,0">▶</button>
+        <span></span><button data-j="0,-1" title="towards you">▼</button><span></span>
+      </div>
+      <div style="flex:1">
+        <label>Step per click (mm)</label>
+        <div class="seg" id="stepseg"><button data-s="0.1">0.1</button><button data-s="1" class="on">1</button><button data-s="5">5</button><button data-s="20">20</button></div>
+        <div style="margin-top:10px;font-size:14px">Head: <b id="pos">—</b></div>
+      </div>
+    </div>
+    <details><summary>More position options</summary>
+      <div class="row">
+        <div><label>Dot marks the</label><select id="center"><option value="0">bottom-left corner of the mark</option><option value="1">centre of the mark</option></select></div>
+        <div><label>Dot power %</label><input type="number" id="dot_power" value="3" min="0.5" max="10" step="0.5"></div>
+      </div>
+      <div class="row">
+        <div><label>Anchor</label><select id="anchor"><option value="head">where the head is</option><option value="xy">fixed X / Y</option></select></div>
+        <div><label>X</label><input type="number" id="x" value="20" step="0.5"></div>
+        <div><label>Y</label><input type="number" id="y" value="20" step="0.5"></div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div>
+  <div class="card">
+    <div class="step"><h2>Preview · what will burn</h2></div>
+    <div class="preview" id="preview"><span class="small">…</span></div>
+    <div class="kv" id="summary"></div>
+    <div id="warnings"></div>
+    <div class="err" id="error"></div>
+    <div class="notice" id="notice"></div>
+    <div class="actions">
+      <button class="act" id="btn-frame">Show outline on the leather</button>
+      <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--mut)"><input type="checkbox" id="frame_first" checked style="width:auto"> outline first, then burn</label>
+      <span style="flex:1"></span>
+      <button class="act go" id="btn-go">Burn</button>
+      <button class="act stop" id="btn-stop">Stop</button>
+    </div>
+    <div class="confirm" id="confirm">
+      <div id="confirm-text" style="margin-bottom:10px"></div>
+      <div class="actions" style="margin:0"><button class="act go" id="btn-go2">Yes, burn now</button><button class="act" id="btn-go-cancel">Cancel</button></div>
+    </div>
+    <div class="bar"><div id="bar"></div></div>
+    <div class="small" id="progress"></div>
+  </div>
+
+  <details class="adv card" style="padding-top:12px">
+    <summary><b>Advanced</b> · calibrate a leather, machine details, log</summary>
+
+    <h3 style="font:400 16px 'Libre Bodoni',serif;margin:14px 0 6px">Calibrate this leather</h3>
+    <p class="small" style="margin:0 0 8px">Burn a grid of squares on an offcut, photograph it, pick the cell you like, save it as a look. Columns are speed (fastest left), rows are power (lowest at the bottom).</p>
+    <div class="row">
+      <div><label>Speeds mm/min</label><input type="text" id="g_speeds" value="6000,5000,4000,3000"></div>
+      <div><label>Powers %</label><input type="text" id="g_powers" value="10,20,30,40"></div>
+      <div><label>Cell mm</label><input type="number" id="g_cell" value="6"></div>
+      <div><label>Passes</label><input type="number" id="g_passes" value="1" min="1" max="5"></div>
+      <div><label>Lines/mm</label><input type="number" id="g_lpm" value="12" min="4" max="20"></div>
+    </div>
+    <div class="actions"><button class="act primary" id="btn-grid">Burn test grid at head position</button></div>
+    <label>Or a list of cells in a row: power/speed/passes</label>
+    <div class="row" style="align-items:flex-end">
+      <div style="flex:3"><input type="text" id="cells" placeholder="100/5000/1, 80/4000/1, 65/3000/1"></div>
+      <div><button class="act primary" id="btn-cells">Burn cells</button></div>
+    </div>
+    <div class="grid-legend" id="grid-legend"></div>
+
+    <h3 style="font:400 16px 'Libre Bodoni',serif;margin:18px 0 6px">Save a look for this leather</h3>
+    <div class="row" style="align-items:flex-end">
+      <div><label>Name</label><input type="text" id="c_name" list="tone-names" placeholder="Light / Standard / Deep / Darkest / Pale">
+        <datalist id="tone-names"><option>Light</option><option>Standard</option><option>Deep</option><option>Darkest</option><option>Pale</option></datalist></div>
+      <div><label>Power %</label><input type="number" id="c_power" min="1" max="100"></div>
+      <div><label>Speed</label><input type="number" id="c_speed" min="100" max="10000" step="100"></div>
+      <div><label>Lines/mm</label><input type="number" id="c_lpm" value="12" min="4" max="20"></div>
+      <div><label>Passes</label><input type="number" id="c_passes" value="1" min="1" max="5"></div>
+    </div>
+    <div class="actions">
+      <button class="act primary" id="btn-cal">Save look</button>
+      <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--mut)"><input type="checkbox" id="c_default" style="width:auto"> make it the default for this leather</label>
+      <span style="flex:1"></span>
+      <button class="act" id="btn-preset-del">Delete selected look</button>
+    </div>
+
+    <h3 style="font:400 16px 'Libre Bodoni',serif;margin:18px 0 6px">Machine</h3>
+    <div class="kv" id="machine" style="margin-top:4px"></div>
+    <div class="row" style="margin-top:8px"><div><label>Port</label><select id="port2"></select></div><div style="align-self:flex-end"><button class="act" id="btn-connect2">Connect to this port</button></div></div>
+    <div class="log" id="log"></div>
+    <div class="small" id="version" style="margin-top:10px;display:flex;gap:12px;align-items:center"><span id="version-text"></span><span style="flex:1"></span><button class="act" id="btn-quit" style="font-size:12.5px;padding:6px 10px">Quit Jeengar Emboss</button></div>
+  </details>
+</div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const api = async (path, body) => {
+  const r = await fetch('/api/' + path, body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  const j = await r.json();
+  if (j.ok === false) throw new Error(j.error);
+  return j;
+};
+const TONES = ['Light','Standard','Deep','Darkest','Pale','Max','Max 2-pass'];
+function clampIn(id) { const el = $(id); let v = +el.value; if (isNaN(v) || el.value === '') v = +el.min; v = Math.min(+el.max, Math.max(+el.min, v)); if (v !== +el.value) el.value = v; return v; }
+let toneVals = null;   // the selected look's numbers, to detect edits
+function fillFromTone(v) { toneVals = v; $('ov_power').value = Math.round(v.power*100); $('ov_speed').value = v.speed; $('ov_lpm').value = v.lines_per_mm; $('ov_passes').value = v.passes; $('ov_mode').value = v.mode || 'binary'; }
+function isEdited() { return toneVals && (Math.round(toneVals.power*100) !== +$('ov_power').value || +toneVals.speed !== +$('ov_speed').value || +toneVals.lines_per_mm !== +$('ov_lpm').value || +toneVals.passes !== +$('ov_passes').value || (toneVals.mode||'binary') !== $('ov_mode').value); }
+function renderEditLinks() {
+  $('edit-links').innerHTML = isEdited() ? `<span class="pill" style="background:#fff3d6;color:var(--warn)">edited</span> <a id="lnk-reset">back to ${tone || 'look'}</a> · <a id="lnk-save">save as a look</a>` : (tone ? `<span class="pill ok">${tone}</span> <a id="lnk-save">save as new look</a>` : `<a id="lnk-save">save as a look</a>`);
+  const r = $('lnk-reset'); if (r) r.onclick = () => { fillFromTone(toneVals); renderEditLinks(); schedulePreview(); };
+  $('lnk-save').onclick = () => { $('c_power').value = $('ov_power').value; $('c_speed').value = $('ov_speed').value; $('c_lpm').value = $('ov_lpm').value; $('c_passes').value = $('ov_passes').value; const d = document.querySelector('details.adv'); d.open = true; $('c_name').scrollIntoView({behavior:'smooth', block:'center'}); $('c_name').focus(); };
+}
+let state = {}, source = 'text', previewTimer = null, busyKind = null, tone = '', step = 1, dotOn = false, autoConnected = false;
+const groups = {light:['natural','natural-brown','tan','white','cream'], dark:['black']};
+const groupOf = c => groups.light.includes(c) ? 'light' : groups.dark.includes(c) ? 'dark' : 'mid';
+const keyOf = () => `${$('leather').value}/${groupOf($('colour').value)}`;
+const mem = (k, v) => { try { if (v === undefined) return localStorage.getItem('emboss.' + k); localStorage.setItem('emboss.' + k, v); } catch (e) {} };
+
+function params(extra) {
+  const ov = {power: clampIn('ov_power'), speed: clampIn('ov_speed'), lines_per_mm: clampIn('ov_lpm'), passes: clampIn('ov_passes'), mode: $('ov_mode').value};
+  return Object.assign({
+    source, text: $('text').value, font: $('font').value, weight: +$('weight').value || 400, align: $('align').value,
+    letter_spacing: +$('letter_spacing').value, file: $('file').value, invert: $('invert').checked,
+    width: +$('width').value, leather: $('leather').value, colour: $('colour').value, preset: tone,
+    anchor: $('anchor').value, x: +$('x').value, y: +$('y').value, center: $('center').value === '1',
+    overrides: ov, frame_first: $('frame_first').checked,
+  }, extra || {});
+}
+
+async function preview() {
+  try {
+    const r = await api('preview', params());
+    $('preview').innerHTML = `<img src="data:image/png;base64,${r.png}" style="width:${Math.min(100, r.width_mm*2)}%">`;
+    const s = r.settings;
+    $('summary').innerHTML = `
+      <b>Mark</b><span>${r.width_mm} × ${r.height_mm} mm</span>
+      <b>Where</b><span>bottom-left at X ${r.x0}, Y ${r.y0} <span class="pill">${r.origin}</span></span>
+      <b>Settings</b><span>${s.power}% · ${s.speed} mm/min · ${s.lines_per_mm} lines/mm · ${s.passes} pass${s.passes>1?'es':''} · ${s.mode==='gray'?'shaded':'solid'} <span class="pill ${isEdited()?'':'ok'}">${isEdited() ? 'edited' : (tone ? 'look: ' + tone : 'starting values')}</span></span>
+      <b>Time</b><span>about ${r.est_min} min</span>`;
+    $('warnings').innerHTML = r.warnings.filter(w => !w.startsWith('Less than 8 mm')).map(w => `<div class="warn">${w}</div>`).join('');
+    $('error').textContent = '';
+    $('btn-go').dataset.summary = `${r.width_mm} × ${r.height_mm} mm on ${$('colour').value} ${$('leather').value}, ${s.power}% at ${s.speed}, ${s.passes} pass${s.passes>1?'es':''}, about ${r.est_min} min.`;
+  } catch (e) { $('error').textContent = e.message; }
+}
+function schedulePreview() { clearTimeout(previewTimer); previewTimer = setTimeout(preview, 350); }
+function fill(sel, items, keep) {
+  const cur = keep ? sel.value : null;
+  sel.innerHTML = items.map(i => Array.isArray(i) ? `<option value="${i[0]}">${i[0]}${i[1]?' · '+i[1]:''}</option>` : `<option>${i}</option>`).join('');
+  if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+}
+
+const EMOJI = ['♥','❤','♡','★','☆','✦','✧','✿','❀','❁','❃','✤','⚜','♛','♕','♚','♔','☼','☾','☽','✝','☮','☯','ॐ','∞','✓','†','‡','•','·','—','«','»','“','”','‘','’','№','©','®','™','°','₹','€','£','$','🐪','🐫','🐘','🦚','🐎','🦁','🐅','🌸','🪷','🌿','🍃','🌙','☀️','⭐','✨','🪔','🕉️','🏹','⚔️','🛡️','👑','💍','🎁','🎂','🎉','🎈','🎓','✈️','⚓','🏔️','🌊','🔥','💧','🍀','🌹','🌻','🌷','🎵','🎶','☕','🍷','📍','🏠','🔑','💼','🐾','🐕','🐈','🐦','🦋','🐝','🐢','🐬','🦅','🦌','🦊'];
+let lastFontSig = '';
+const WEIGHT_NAMES = {300:'Light',400:'Regular',500:'Medium',600:'Semibold',700:'Bold',900:'Black'};
+function renderWeights(keep) {
+  const opt = $('font').selectedOptions[0]; if (!opt) return;
+  const ws = (opt.dataset.w || '400').split(',').map(Number);
+  $('weight').innerHTML = ws.map(w => `<option value="${w}">${WEIGHT_NAMES[w] || w}</option>`).join('');
+  $('weight').value = ws.includes(+keep) ? keep : (ws.includes(400) ? 400 : ws[0]);
+  $('weight').disabled = ws.length < 2;
+}
+function renderTones() {
+  const pk = (state.presets || {})[keyOf()];
+  const seg = $('toneseg');
+  if (!pk) {
+    seg.innerHTML = `<button disabled>no looks saved yet</button>`;
+    $('tone-summary').innerHTML = `No saved looks for this leather. The numbers below are safe starting values; <a id="lnk-cal">calibrate it</a> under Advanced.`;
+    $('lnk-cal').onclick = () => { document.querySelector('details.adv').open = true; document.querySelector('details.adv').scrollIntoView({behavior:'smooth'}); };
+    if (tone !== '' || !toneVals) { tone = ''; const sd = (state.seeds || {})[keyOf()]; if (sd) fillFromTone(sd); }
+    renderEditLinks();
+    return;
+  }
+  const ord = n => { const i = TONES.indexOf(n); return i < 0 ? 99 : i; };
+  const names = Object.keys(pk.presets).sort((a,b)=>ord(a)-ord(b));
+  if (!names.includes(tone)) tone = mem('tone.' + keyOf()) && names.includes(mem('tone.' + keyOf())) ? mem('tone.' + keyOf()) : pk.default;
+  seg.innerHTML = names.map(n => `<button data-t="${n}" class="${n===tone?'on':''} ${n===pk.default?'def':''}">${n}</button>`).join('');
+  seg.querySelectorAll('button').forEach(b => b.onclick = () => { tone = b.dataset.t; mem('tone.' + keyOf(), tone); fillFromTone(pk.presets[tone]); renderTones(); schedulePreview(); });
+  const v = pk.presets[tone];
+  if (!toneVals || toneVals !== v && !isEdited()) fillFromTone(v);
+  $('tone-summary').innerHTML = `Edit the numbers below for this job; the preview and the burn use what is in the boxes.`;
+  renderEditLinks();
+}
+
+async function refresh() {
+  try { state = await api('state'); } catch (e) { $('status').className = 'status off'; $('conn-text').textContent = 'App not running'; return; }
+  const st = $('status');
+  st.className = 'status ' + (state.connected ? 'on' : (state.notice ? 'lost' : 'off'));
+  $('conn-text').textContent = state.connected ? 'Laser ready' : (state.notice ? 'Laser disconnected, waiting…' : 'Laser off or not plugged in');
+  $('btn-connect').textContent = state.connected ? 'Disconnect' : 'Connect';
+  $('notice').textContent = state.notice || '';
+  const fontSig = JSON.stringify(state.font_groups.map(g => [g.group, g.fonts.length]));
+  if (!$('font').options.length || fontSig !== lastFontSig) {
+    lastFontSig = fontSig;
+    const keepFont = $('font').value || mem('font');
+    $('font').innerHTML = state.font_groups.map(g => `<optgroup label="${g.group}">` + g.fonts.map(f => `<option value="${f.family}" data-w="${f.weights.join(',')}">${f.family}</option>`).join('') + `</optgroup>`).join('');
+    $('font').value = keepFont && [...$('font').options].some(o => o.value === keepFont) ? keepFont : 'Libre Bodoni';
+    renderWeights($('weight').value || mem('weight'));
+    if (!$('leather').options.length) {
+      fill($('leather'), state.leathers); fill($('colour'), state.colours);
+      $('leather').value = mem('leather') || 'veg-tan'; $('colour').value = mem('colour') || 'dark-olive'; $('width').value = mem('width') || 45;
+    }
+    if (mem('source') === 'file') $('tab-file').click();
+    schedulePreview();
+  }
+  fill($('port'), state.ports.length ? state.ports : [['(no ports)','']], true);
+  fill($('port2'), state.ports.length ? state.ports : [['(no ports)','']], true);
+  fill($('file'), state.uploads, true);
+  if (state.position) $('pos').textContent = `X ${state.position[0].toFixed(1)}  Y ${state.position[1].toFixed(1)}`;
+  const s = state.settings;
+  $('machine').innerHTML = state.connected ? `<b>Port</b><span>${state.port}</span><b>$30</b><span>${s['30']} (100% = S${s['30']})</span><b>$32</b><span>${s['32']==1?'laser mode on':'<span class=err>laser mode OFF</span>'}</span><b>Max rate</b><span>${s['110']} / ${s['111']} mm/min</span><b>Accel</b><span>${s['120']} / ${s['121']} mm/s²</span>` : `<b>—</b><span>not connected</span>`;
+  $('log').textContent = (state.log || []).join('\n');
+  const u = state.update || {};
+  $('version-text').innerHTML = `Jeengar Emboss ${u.version}` + (u.newer ? ` &nbsp;·&nbsp; <a href="${u.url}" target="_blank" style="color:var(--brand)">version ${u.latest} is available</a>` : u.checked && !u.error ? ' · up to date' : '');
+  if (state.connected) { $('ov_speed').max = s['110'] || 10000; $('c_speed').max = s['110'] || 10000; $('width').max = Math.min(380, (s['130'] || 400) - 20); }
+  renderTones();
+  // auto-connect once, when a laser-looking port is there
+  if (!state.connected && !autoConnected && !state.notice) {
+    const p = state.ports.find(x => /espressif|usbmodem|usbserial|ch340|cp210|ttyacm|ttyusb/i.test(x[0] + ' ' + x[1]));
+    if (p) { autoConnected = true; try { await api('connect', {port: p[0]}); } catch (e) { $('error').textContent = 'Could not connect: ' + e.message; } return refresh(); }
+  }
+  // busy / progress
+  const p = state.progress, busy = state.busy === 'dot' ? null : state.busy;
+  document.querySelectorAll('button.act:not(.stop), .jog button').forEach(b => b.disabled = (!!busy || !state.connected) && !['btn-connect','btn-connect2','btn-go-cancel','btn-quit'].includes(b.id));
+  $('btn-stop').disabled = !state.busy;
+  dotOn = !!state.dot_on; $('dotbtn').classList.toggle('on', dotOn);
+  if (busy) { $('bar').style.width = p.pct + '%'; $('progress').textContent = `${busy === 'run' ? 'Burning' : busy === 'frame' ? 'Outline' : 'Test grid'}: ${p.pct}% · about ${Math.ceil(p.eta_s/60)} min left`; }
+  else if (busyKind) { $('bar').style.width = '100%'; $('progress').textContent = 'Done.'; busyKind = null; preview(); }
+  if (busy) busyKind = busy;
+  if (state.error && !busy) $('error').textContent = state.error;
+}
+
+// wiring
+$('tab-text').onclick = () => { source='text'; mem('source','text'); $('tab-text').className='on'; $('tab-file').className=''; $('pane-text').style.display=''; $('pane-file').style.display='none'; schedulePreview(); };
+$('tab-file').onclick = () => { source='file'; mem('source','file'); $('tab-file').className='on'; $('tab-text').className=''; $('pane-file').style.display=''; $('pane-text').style.display='none'; schedulePreview(); };
+['text','align','letter_spacing','file','invert','width','anchor','center','x','y']
+  .forEach(id => { $(id).addEventListener('input', schedulePreview); $(id).addEventListener('change', schedulePreview); });
+['ov_power','ov_speed','ov_lpm','ov_passes','ov_mode'].forEach(id => { $(id).addEventListener('input', () => { renderEditLinks(); schedulePreview(); }); $(id).addEventListener('change', () => { clampIn(id === 'ov_mode' ? 'ov_power' : id); renderEditLinks(); schedulePreview(); }); });
+['leather','colour'].forEach(id => $(id).addEventListener('change', () => { mem(id, $(id).value); tone=''; toneVals=null; renderTones(); schedulePreview(); }));
+$('width').addEventListener('change', () => mem('width', $('width').value));
+$('emojibox').innerHTML = EMOJI.map(e => `<span style="cursor:pointer;padding:2px 5px;border-radius:6px" onmouseover="this.style.background='#f1e9dc'" onmouseout="this.style.background=''">${e}</span>`).join('');
+$('btn-emoji').onclick = () => { const b = $('emojibox'); b.style.display = b.style.display === 'none' ? '' : 'none'; $('btn-emoji').className = b.style.display === 'none' ? '' : 'on'; };
+$('emojibox').addEventListener('click', e => {
+  if (e.target.tagName !== 'SPAN') return;
+  const t = $('text'), a = t.selectionStart, z = t.selectionEnd;
+  t.value = t.value.slice(0, a) + e.target.textContent + t.value.slice(z); t.selectionStart = t.selectionEnd = a + e.target.textContent.length; t.focus(); schedulePreview();
+});
+$('font').addEventListener('change', () => { mem('font', $('font').value); renderWeights(700 === +$('weight').value ? 700 : 400); schedulePreview(); });
+$('weight').addEventListener('change', () => { mem('weight', $('weight').value); schedulePreview(); });
+$('center').addEventListener('change', () => $('anchor-word').textContent = $('center').value === '1' ? 'centre' : 'bottom-left corner');
+$('fileinput').addEventListener('change', async () => {
+  const f = $('fileinput').files[0]; if (!f) return;
+  try {
+    if (f.size > 25 * 1024 * 1024) throw new Error('File is over 25 MB; export a smaller PNG.');
+    const data = await new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(rd.result.split(',')[1]); rd.onerror = () => rej(new Error('could not read file')); rd.readAsDataURL(f); });
+    $('error').textContent = 'uploading ' + f.name + '…';
+    const r = await api('upload', {name: f.name, data});
+    await refresh(); $('file').value = r.file; $('error').textContent = ''; schedulePreview();
+  } catch (e) { $('error').textContent = 'Upload failed: ' + e.message; }
+});
+const doConnect = async (port) => { try { await api(state.connected ? 'disconnect' : 'connect', {port}); } catch (e) { $('error').textContent = e.message; } await refresh(); schedulePreview(); };
+$('btn-connect').onclick = () => doConnect($('port2').value);
+$('btn-connect2').onclick = () => { if (state.connected) api('disconnect', {}).then(() => doConnect($('port2').value)); else doConnect($('port2').value); };
+$('stepseg').querySelectorAll('button').forEach(b => b.onclick = () => { step = +b.dataset.s; $('stepseg').querySelectorAll('button').forEach(x => x.className = ''); b.className = 'on'; });
+document.querySelectorAll('.jog button[data-j]').forEach(b => b.onclick = async () => {
+  const [dx, dy] = b.dataset.j.split(',').map(Number);
+  try { const r = await api('jog', {dx: dx*step, dy: dy*step}); $('pos').textContent = `X ${r.position[0].toFixed(1)}  Y ${r.position[1].toFixed(1)}`; schedulePreview(); }
+  catch (e) { $('error').textContent = e.message; }
+});
+$('dotbtn').onclick = async () => { dotOn = !dotOn; try { await api('dot', {on: dotOn, power: +$('dot_power').value}); $('dotbtn').classList.toggle('on', dotOn); } catch (e) { $('error').textContent = e.message; } };
+document.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+  const map = {ArrowUp:'0,1', ArrowDown:'0,-1', ArrowLeft:'-1,0', ArrowRight:'1,0'};
+  if (map[e.key]) { e.preventDefault(); document.querySelector(`.jog button[data-j="${map[e.key]}"]`).click(); }
+  if (e.key === 'Escape' && !$('btn-stop').disabled) $('btn-stop').click();
+});
+$('btn-frame').onclick = async () => { try { await api('frame', params({frame_power: 1.5})); } catch (e) { $('error').textContent = e.message; } refresh(); };
+$('btn-go').onclick = () => { $('confirm-text').innerHTML = `<b>Burn ${$('btn-go').dataset.summary || ''}</b><br><span class="small">Lid closed, ventilation on, leather flat. Nothing on the bed but the piece.</span>`; $('confirm').classList.add('show'); };
+$('btn-go-cancel').onclick = () => $('confirm').classList.remove('show');
+$('btn-go2').onclick = async () => {
+  $('confirm').classList.remove('show');
+  if (dotOn) { dotOn = false; $('dotbtn').classList.remove('on'); }
+  try { await api('run', params()); $('bar').style.width = '0%'; $('progress').textContent = 'Starting…'; } catch (e) { $('error').textContent = e.message; }
+  refresh();
+};
+$('btn-stop').onclick = async () => { try { await api('stop', {}); } catch (e) {} $('confirm').classList.remove('show'); refresh(); };
+$('btn-grid').onclick = async () => {
+  const body = {leather: $('leather').value, colour: $('colour').value, speeds: $('g_speeds').value.split(',').map(Number),
+    powers: $('g_powers').value.split(',').map(Number), cell: +$('g_cell').value, gap: 3, passes: +$('g_passes').value,
+    overrides: {lines_per_mm: +$('g_lpm').value}, anchor: $('anchor').value, x: +$('x').value, y: +$('y').value};
+  try {
+    const r = await api('testgrid', Object.assign({dry_run: true}, body)); const L = r.legend;
+    if (!confirm(`Burn a ${L.w} × ${L.h} mm test grid at X${L.x0} Y${L.y0}, ${L.lines_per_mm} lines/mm, ${L.passes} pass(es)? About ${Math.ceil(L.est_min*L.passes)} min. Lid closed.`)) return;
+    await api('testgrid', body);
+    const rows = [...L.powers].reverse().map(p => `${String(p).padStart(4)}% | ` + L.speeds.map(s => String(s).padStart(6)).join(' '));
+    $('grid-legend').textContent = [`bottom-left at X${L.x0} Y${L.y0} · ${L.lines_per_mm} lines/mm · ${L.passes} pass(es)`, ...rows, '      +' + '-'.repeat(7*L.speeds.length), '        ' + L.speeds.map(s=>String(s).padStart(6)).join(' ') + '  mm/min'].join('\n');
+  } catch (e) { $('error').textContent = e.message; }
+  refresh();
+};
+$('btn-cells').onclick = async () => {
+  const cells = $('cells').value.split(',').map(t => t.trim()).filter(Boolean).map(t => { const [p, s, n] = t.split('/').map(Number); return {power: p, speed: s, passes: n || 1}; });
+  if (!cells.length || cells.some(c => !(c.power > 0 && c.speed > 0))) { $('error').textContent = 'Cells must look like 100/5000/1, 80/4000/2'; return; }
+  const body = {leather: $('leather').value, colour: $('colour').value, cells, cell: +$('g_cell').value, gap: 3,
+    overrides: {lines_per_mm: +$('g_lpm').value}, anchor: $('anchor').value, x: +$('x').value, y: +$('y').value};
+  try {
+    const r = await api('testgrid', Object.assign({dry_run: true}, body)); const L = r.legend;
+    if (!confirm(`Burn ${cells.length} cells (${L.w} × ${L.h} mm) at X${L.x0} Y${L.y0}, ${L.lines_per_mm} lines/mm? Left to right, 1 to ${cells.length}. Lid closed.`)) return;
+    await api('testgrid', body);
+    $('grid-legend').textContent = `cells at X${L.x0} Y${L.y0}, left to right:\n` + cells.map((c, i) => `${i+1}: ${c.power}% @ ${c.speed} x${c.passes}`).join('\n');
+  } catch (e) { $('error').textContent = e.message; }
+  refresh();
+};
+$('btn-cal').onclick = async () => {
+  if (!$('c_name').value.trim()) { $('error').textContent = 'Give the look a name.'; return; }
+  try { await api('calibrate', {leather: $('leather').value, colour: $('colour').value, name: $('c_name').value.trim(), power: +$('c_power').value, speed: +$('c_speed').value,
+    lines_per_mm: +$('c_lpm').value || null, passes: +$('c_passes').value || 1, make_default: $('c_default').checked}); }
+  catch (e) { $('error').textContent = e.message; }
+  tone = $('c_name').value.trim(); await refresh(); schedulePreview();
+};
+$('lnk-addfont').onclick = () => $('fontfile').click();
+$('fontfile').onchange = async () => {
+  for (const f of $('fontfile').files) {
+    try {
+      const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(f); });
+      const r = await api('font-upload', {name: f.name, data});
+      $('fontmsg').textContent = `Added ${r.family} ${WEIGHT_NAMES[r.weight] || r.weight}`;
+      mem('font', r.family); $('font').value = '';
+    } catch (e) { $('fontmsg').textContent = e.message; }
+  }
+  $('fontfile').value = ''; refresh();
+};
+$('lnk-fontsfolder').onclick = () => api('open-fonts-folder', {}).catch(e => $('fontmsg').textContent = e.message);
+$('lnk-rescan').onclick = async () => { const r = await api('fonts-rescan', {}); $('fontmsg').textContent = `${r.families} font families`; refresh(); };
+$('btn-quit').onclick = async () => { if (!confirm('Quit Jeengar Emboss?')) return; try { await api('quit', {}); } catch (e) { $('error').textContent = e.message; return; } document.body.innerHTML = '<p style="padding:40px;font:18px Raleway">Jeengar Emboss has quit.</p>'; };
+$('btn-preset-del').onclick = async () => {
+  if (!tone) return;
+  if (!confirm(`Delete the look "${tone}" for ${keyOf()}?`)) return;
+  try { await api('preset-delete', {leather: $('leather').value, colour: $('colour').value, name: tone}); } catch (e) { $('error').textContent = e.message; }
+  tone = ''; await refresh(); schedulePreview();
+};
+
+refresh(); setInterval(refresh, 1000);
+</script>
+</body>
+</html>

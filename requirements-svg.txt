@@ -1,0 +1,2 @@
+# SVG rendering. Optional: PNG and text work without it.
+resvg-py>=0.3

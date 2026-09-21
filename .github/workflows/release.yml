@@ -1,0 +1,113 @@
+name: Build and release
+
+# Push a tag like v1.0.1 and this builds Mac, Windows and Linux bundles and
+# attaches them to a GitHub Release. Also runs on manual dispatch (artifacts only).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14          # Apple Silicon
+            label: mac-arm64
+          - os: windows-latest
+            label: windows
+          - os: ubuntu-22.04      # older glibc = runs on more distros
+            label: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-svg.txt pyinstaller
+
+      - name: Version
+        id: v
+        shell: bash
+        run: |
+          V=$(python -c "import emboss; print(emboss.__version__)")
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          if [[ "${GITHUB_REF}" == refs/tags/v* && "${GITHUB_REF#refs/tags/v}" != "$V" ]]; then
+            echo "Tag ${GITHUB_REF#refs/tags/} does not match emboss/__init__.py version $V"; exit 1; fi
+
+      - name: Build
+        run: pyinstaller --noconfirm emboss.spec
+
+      - name: Smoke test (bundle starts and serves the UI)
+        if: runner.os != 'macOS'
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then EXE="dist/Jeengar Emboss/Jeengar Emboss.exe"; else EXE="dist/Jeengar Emboss/Jeengar Emboss"; fi
+          "$EXE" ui --no-browser --port-http 8799 & PID=$!
+          sleep 6
+          sleep 4   # let the OS font scan finish
+          curl -sf http://127.0.0.1:8799/api/state | python -c "
+          import sys,json; d=json.load(sys.stdin)
+          groups={g['group']:len(g['fonts']) for g in d['font_groups']}
+          print('version', d['update']['version'], 'groups', groups)
+          assert len(d['fonts'])>40, d['fonts']
+          assert groups.get('Installed on this computer',0)>0, 'OS fonts not found on this runner'"
+          kill $PID || true
+
+      - name: Package (macOS .dmg)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p pkg
+          hdiutil create -volname "Jeengar Emboss" -srcfolder "dist/Jeengar Emboss.app" -ov -format UDZO \
+            "pkg/JeengarEmboss-${{ steps.v.outputs.version }}-${{ matrix.label }}.dmg"
+
+      - name: Package (Windows .zip)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force pkg | Out-Null
+          Compress-Archive -Path "dist/Jeengar Emboss" -DestinationPath "pkg/JeengarEmboss-${{ steps.v.outputs.version }}-windows.zip"
+
+      - name: Package (Linux .tar.gz)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p pkg
+          cp "Jeengar Emboss.desktop" "dist/Jeengar Emboss/"
+          tar -C dist -czf "pkg/JeengarEmboss-${{ steps.v.outputs.version }}-linux-x86_64.tar.gz" "Jeengar Emboss"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.label }}
+          path: pkg/*
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v6
+        with:
+          path: pkg
+          merge-multiple: true
+      - name: Checksums
+        run: cd pkg && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: pkg/*
+          generate_release_notes: true
+          body: |
+            **First launch**
+            - **Mac:** open the .dmg, drag *Jeengar Emboss* to Applications. First time: right-click the app → Open → Open (it is not Apple-notarised).
+            - **Windows:** unzip, open the folder, run *Jeengar Emboss.exe*. If SmartScreen appears: More info → Run anyway. Close the black window to quit.
+            - **Linux:** untar, run `./Jeengar\ Emboss` (add your user to the `dialout` group for USB access).
+
+            Your presets (calibration.json) live in your user data folder and survive updates.

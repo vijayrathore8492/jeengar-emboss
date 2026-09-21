@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Jeengar Emboss
+Comment=Engrave logos and text on leather with the Falcon
+Exec=bash -c 'cd "$(dirname "%k")" && ./start-emboss.sh'
+Terminal=true
+Icon=applications-graphics
+Categories=Graphics;

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+build/
+dist/
+out/
+machine.json
+.deps-ok
+assets/fonts/_old/
+.DS_Store
+/fonts/

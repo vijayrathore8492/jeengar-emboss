@@ -1,0 +1,61 @@
+{
+  "veg-tan/mid": {
+    "default": "Standard",
+    "presets": {
+      "Light": {
+        "power": 0.1,
+        "speed": 5000.0,
+        "lines_per_mm": 12.0,
+        "passes": 1,
+        "mode": "binary",
+        "threshold": 128,
+        "note": ""
+      },
+      "Standard": {
+        "power": 1.0,
+        "speed": 8000.0,
+        "lines_per_mm": 12.0,
+        "passes": 1,
+        "mode": "binary",
+        "threshold": 128,
+        "note": ""
+      },
+      "Deep": {
+        "power": 0.2,
+        "speed": 4000.0,
+        "lines_per_mm": 12.0,
+        "passes": 2,
+        "mode": "binary",
+        "threshold": 128,
+        "note": ""
+      },
+      "Darkest": {
+        "power": 0.3,
+        "speed": 4000.0,
+        "lines_per_mm": 12.0,
+        "passes": 2,
+        "mode": "binary",
+        "threshold": 128,
+        "note": ""
+      },
+      "Max": {
+        "lines_per_mm": 12.0,
+        "mode": "binary",
+        "threshold": 128,
+        "note": "",
+        "power": 1.0,
+        "speed": 10000.0,
+        "passes": 1
+      },
+      "Max 2-pass": {
+        "lines_per_mm": 12.0,
+        "mode": "binary",
+        "threshold": 128,
+        "note": "",
+        "power": 1.0,
+        "speed": 10000.0,
+        "passes": 2
+      }
+    }
+  }
+}
