@@ -102,7 +102,7 @@ jobs:
           merge-multiple: true
       - name: Checksums
         run: cd pkg && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: pkg/*
           generate_release_notes: true
