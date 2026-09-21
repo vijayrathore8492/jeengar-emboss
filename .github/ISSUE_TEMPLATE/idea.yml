@@ -1,0 +1,8 @@
+name: Idea or question
+description: A feature you would like, or something unclear
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes: { label: What would help, description: "What you are trying to do and what is in the way." }
+    validations: { required: true }

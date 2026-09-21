@@ -51,12 +51,17 @@ class State:
         self.want_port: str | None = None     # port to auto-reconnect to
         self.last_reconnect = 0.0
         self.notice: str | None = None
+        self.connecting = False               # watchdog must not touch the port mid-handshake
+        self.missing_since = 0.0              # when the watchdog first saw the port gone
 
     def say(self, msg: str) -> None:
         line = f"{time.strftime('%H:%M:%S')} {msg}"
         self.log.append(line)
         self.log = self.log[-60:]
-        print(msg)
+        try:
+            print(msg)                      # windowed builds have no stdout; the file log is the record
+        except Exception:  # noqa: BLE001
+            pass
         try:
             OUT.mkdir(exist_ok=True)
             with open(paths.LOG, "a", encoding="utf-8") as f:
@@ -87,15 +92,22 @@ class State:
                 raise GrblError("no serial ports found")
             port = ports[0][0]
         self.say(f"connecting to {port}")
-        self.g = Grbl(port)
-        self.g.unlock()
-        self.settings = self.g.settings()
-        if not self.settings:
-            raise GrblError("controller returned no $$ settings")
-        if self.settings.get("32", 0) != 1:
-            self.say("laser mode $32 was off, setting $32=1")
-            self.g.set_setting(32, 1)
-            self.settings["32"] = 1
+        self.connecting = True
+        self.missing_since = 0.0
+        try:
+            g = Grbl(port)
+            g.unlock()
+            self.settings = g.settings()
+            if not self.settings:
+                g.close()
+                raise GrblError("controller returned no $$ settings")
+            if self.settings.get("32", 0) != 1:
+                self.say("laser mode $32 was off, setting $32=1")
+                g.set_setting(32, 1)
+                self.settings["32"] = 1
+            self.g = g
+        finally:
+            self.connecting = False
         self.port = port
         self.want_port = port
         self.notice = None
@@ -128,10 +140,18 @@ class State:
             self.notice = "Laser was power-cycled: head position reset to 0,0. Re-aim before the next burn."
 
     def watchdog(self) -> None:
-        """Called on every /api/state: detect a vanished port, auto-reconnect."""
+        """Called on every /api/state: detect a vanished port, auto-reconnect.
+        Debounced: Windows drops the COM port for a moment when the board resets."""
+        if self.connecting:
+            return
         present = {d for d, _ in find_ports()}
         if self.g and self.port not in present:
-            self.lost("port vanished")
+            if not self.missing_since:
+                self.missing_since = time.time()
+            elif time.time() - self.missing_since > 3.0:
+                self.lost("port vanished")
+        else:
+            self.missing_since = 0.0
         if not self.g and self.want_port and self.want_port in present \
                 and time.time() - self.last_reconnect > 4.0:
             self.last_reconnect = time.time()
@@ -602,7 +622,10 @@ def serve(port: int = 8765, open_browser: bool = True, window: bool = False) -> 
                 shutdown()
             return
 
-    print("(Ctrl-C to quit)")
+    try:
+        print("(Ctrl-C to quit)")
+    except Exception:  # noqa: BLE001
+        pass
     if open_browser:
         threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     try:

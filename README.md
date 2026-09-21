@@ -36,7 +36,7 @@ Download from the [latest release](https://github.com/vijayrathore8492/jeengar-e
 | | File | First launch |
 |---|---|---|
 | macOS (Apple Silicon) | `JeengarEmboss-<v>-mac-arm64.dmg` | Drag to Applications. The app is not notarised: right-click → **Open** → Open, once. |
-| Windows 10/11 | `JeengarEmboss-<v>-windows.zip` | Unzip anywhere, run `Jeengar Emboss.exe`. SmartScreen: *More info → Run anyway*, once. Closing the black log window quits. Older Falcons need the CH340 USB driver. |
+| Windows 10/11 | `JeengarEmboss-<v>-windows.zip` | Unzip anywhere, run `Jeengar Emboss.exe`. SmartScreen: *More info → Run anyway*, once. Older Falcons need the CH340 USB driver. |
 | Linux (x86-64) | `JeengarEmboss-<v>-linux-x86_64.tar.gz` | Untar, run `./Jeengar\ Emboss`. `sudo usermod -aG dialout $USER`, log out and in. Needs WebKitGTK for the app window (`gir1.2-webkit2-4.1` on Ubuntu); without it the UI opens in your browser. |
 
 Nothing else to install — Python and every library are inside the bundle.
