@@ -59,9 +59,10 @@ exe = EXE(
     debug=False,
     strip=False,
     upx=False,
-    # Windows/Linux: a console window shows the log and closing it quits the app.
-    # macOS: a proper .app with no terminal; quit from the UI (Advanced > Quit) or the Dock.
-    console=(sys.platform != "darwin"),
+    # No console anywhere: the app window (or Advanced > Quit) is how you leave.
+    # Debugging on Windows/Linux: run "Jeengar Emboss" ui --no-browser from a terminal;
+    # the log is also in the data folder (out/emboss.log).
+    console=False,
     icon=icon,
 )
 coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name=NAME)

@@ -238,7 +238,8 @@ const api = async (path, body) => {
   return j;
 };
 const TONES = ['Light','Standard','Deep','Darkest','Pale','Max','Max 2-pass'];
-function clampIn(id) { const el = $(id); let v = +el.value; if (isNaN(v) || el.value === '') v = +el.min; v = Math.min(+el.max, Math.max(+el.min, v)); if (v !== +el.value) el.value = v; return v; }
+function clampIn(id) { const el = $(id); let v = +el.value; if (isNaN(v) || el.value === '') v = +el.min; return Math.min(+el.max, Math.max(+el.min, v)); }
+function clampBox(id) { const el = $(id); const v = clampIn(id); if (String(v) !== el.value) el.value = v; return v; }
 let toneVals = null;   // the selected look's numbers, to detect edits
 function fillFromTone(v) { toneVals = v; $('ov_power').value = Math.round(v.power*100); $('ov_speed').value = v.speed; $('ov_lpm').value = v.lines_per_mm; $('ov_passes').value = v.passes; $('ov_mode').value = v.mode || 'binary'; }
 function isEdited() { return toneVals && (Math.round(toneVals.power*100) !== +$('ov_power').value || +toneVals.speed !== +$('ov_speed').value || +toneVals.lines_per_mm !== +$('ov_lpm').value || +toneVals.passes !== +$('ov_passes').value || (toneVals.mode||'binary') !== $('ov_mode').value); }
@@ -371,7 +372,7 @@ $('tab-text').onclick = () => { source='text'; mem('source','text'); $('tab-text
 $('tab-file').onclick = () => { source='file'; mem('source','file'); $('tab-file').className='on'; $('tab-text').className=''; $('pane-file').style.display=''; $('pane-text').style.display='none'; schedulePreview(); };
 ['text','align','letter_spacing','file','invert','width','anchor','center','x','y']
   .forEach(id => { $(id).addEventListener('input', schedulePreview); $(id).addEventListener('change', schedulePreview); });
-['ov_power','ov_speed','ov_lpm','ov_passes','ov_mode'].forEach(id => { $(id).addEventListener('input', () => { renderEditLinks(); schedulePreview(); }); $(id).addEventListener('change', () => { clampIn(id === 'ov_mode' ? 'ov_power' : id); renderEditLinks(); schedulePreview(); }); });
+['ov_power','ov_speed','ov_lpm','ov_passes','ov_mode'].forEach(id => { $(id).addEventListener('input', () => { renderEditLinks(); schedulePreview(); }); $(id).addEventListener('change', () => { if (id !== 'ov_mode') clampBox(id); renderEditLinks(); schedulePreview(); }); });
 ['leather','colour'].forEach(id => $(id).addEventListener('change', () => { mem(id, $(id).value); tone=''; toneVals=null; renderTones(); schedulePreview(); }));
 $('width').addEventListener('change', () => mem('width', $('width').value));
 $('emojibox').innerHTML = EMOJI.map(e => `<span style="cursor:pointer;padding:2px 5px;border-radius:6px" onmouseover="this.style.background='#f1e9dc'" onmouseout="this.style.background=''">${e}</span>`).join('');

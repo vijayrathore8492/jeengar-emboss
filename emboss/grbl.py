@@ -55,23 +55,46 @@ class Grbl:
     def __init__(self, port: str, baud: int = BAUD, verbose: bool = False):
         self.port = port
         self.verbose = verbose
-        self.ser = serial.Serial(port, baud, timeout=0.1)
         self.stop_requested = False
         self.lock = threading.RLock()   # one conversation with the board at a time
+        # Opening the port resets the ESP32; on Windows the board re-enumerates and the
+        # COM port can vanish for a moment, so the open itself may need a retry.
+        last: Exception | None = None
+        for attempt in range(6):
+            try:
+                self.ser = serial.Serial(port, baud, timeout=0.1)
+                break
+            except serial.SerialException as e:
+                last = e
+                time.sleep(0.5)
+        else:
+            raise GrblError(f"could not open {port}: {last}")
         self._wake()
 
     # -- basics -------------------------------------------------------------
     def _wake(self) -> None:
-        self.ser.write(b"\r\n\r\n")
-        time.sleep(2.0)                     # board resets on open (DTR)
-        self.ser.reset_input_buffer()
+        time.sleep(2.0)                     # board resets on open (DTR); let it boot
+        for _ in range(3):
+            try:
+                self.ser.write(b"\r\n\r\n")
+                time.sleep(0.3)
+                self.ser.reset_input_buffer()
+                return
+            except serial.SerialException:
+                time.sleep(0.5)             # Windows: handle not ready right after re-enumeration
 
     def close(self) -> None:
         try:
-            self.ser.write(b"M5\n")
-            time.sleep(0.2)
+            if self.ser.is_open:
+                self.ser.write(b"M5\n")
+                time.sleep(0.2)
+        except (OSError, serial.SerialException):
+            pass
         finally:
-            self.ser.close()
+            try:
+                self.ser.close()
+            except Exception:  # noqa: BLE001
+                pass
 
     def _readline(self, timeout: float) -> str | None:
         t0 = time.time()
