@@ -554,6 +554,16 @@ class Handler(BaseHTTPRequestHandler):
     def api_update_download(self, p):
         return {"download": update.download()}
 
+    def api_restart(self, p):
+        if S.busy and S.busy != "dot":
+            raise GrblError("a job is running; press Stop first")
+        S.stop_dot()
+        update.restart()
+        S.say("restarting into the new version")
+        if S.g:
+            S.g.close()
+        threading.Timer(0.3, lambda: __import__("os")._exit(0)).start()
+
     def api_quit(self, p):
         """Close the app (the packaged Mac app has no terminal window to close)."""
         if S.busy and S.busy != "dot":
