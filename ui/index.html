@@ -390,7 +390,7 @@ async function refresh() {
   }
   // busy / progress
   const p = state.progress, busy = state.busy === 'dot' ? null : state.busy;
-  document.querySelectorAll('button.act:not(.stop), .jog button').forEach(b => b.disabled = (!!busy || !state.connected) && !['btn-connect','btn-connect2','btn-go-cancel','btn-quit'].includes(b.id));
+  document.querySelectorAll('button.act:not(.stop), .jog button').forEach(b => b.disabled = (!!busy || !state.connected) && !['btn-connect','btn-connect2','btn-go-cancel','btn-quit','btn-inst','btn-upd'].includes(b.id));
   $('btn-stop').disabled = !state.busy;
   dotOn = !!state.dot_on; $('dotbtn').classList.toggle('on', dotOn);
   if (busy) { $('bar').style.width = p.pct + '%'; $('progress').textContent = `${busy === 'run' ? 'Burning' : busy === 'frame' ? 'Outline' : 'Test grid'}: ${p.pct}% · about ${Math.ceil(p.eta_s/60)} min left`; }
