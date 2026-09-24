@@ -125,7 +125,7 @@ def _download() -> None:
                 shutil.copy2(dest, me)
                 os.chmod(me, 0o755)
                 with _lock:
-                    dl.update(status="done", pct=100, path=me, error=None)
+                    dl.update(status="done", pct=100, path=me, error=None, restartable=True)
                 return
             except OSError:
                 pass  # fall through: leave the file in Downloads
@@ -137,6 +137,16 @@ def _download() -> None:
     except Exception as e:  # noqa: BLE001
         with _lock:
             dl.update(status="error", error=str(e)[:120])
+
+
+def restart() -> None:
+    """Linux AppImage only: launch the (already replaced) file and exit this process."""
+    me = os.environ.get("APPIMAGE")
+    if not me or not Path(me).exists():
+        raise ValueError("restart is only available for the installed AppImage")
+    # the new instance needs port 8765, so it must start after we are gone
+    subprocess.Popen(["/bin/sh", "-c", f'sleep 1.5; exec "{me}"'], start_new_session=True,
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def download() -> dict:

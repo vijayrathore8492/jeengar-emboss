@@ -78,6 +78,8 @@ details.adv{border-top:1px solid var(--line);padding-top:10px;margin-top:14px}
 <div id="updbar" style="display:none;background:#fff8e6;border-bottom:1px solid #e0b74a;padding:9px 22px;font-size:14px;align-items:center;gap:14px">
   <span id="updtext"></span>
   <button class="act primary" id="btn-upd" style="padding:6px 12px;font-size:13px">Download</button>
+  <button class="act primary" id="btn-upd-restart" style="padding:6px 12px;font-size:13px;display:none">Restart now</button>
+  <button class="act" id="btn-upd-quit" style="padding:6px 12px;font-size:13px;display:none">Quit, then open the new one</button>
   <span id="updprog" class="small"></span>
   <span style="flex:1"></span>
   <a id="upd-hide" style="color:var(--mut);cursor:pointer;font-size:13px">later</a>
@@ -316,7 +318,13 @@ function renderUpdate(u) {
   $('updtext').textContent = `Version ${u.latest} is available — download it ${what}.`;
   const b = $('btn-upd');
   if (dl.status === 'running') { b.disabled = true; b.textContent = 'Downloading…'; $('updprog').textContent = `${dl.pct}%`; }
-  else if (dl.status === 'done') { b.disabled = true; b.textContent = 'Downloaded'; $('updprog').textContent = dl.path ? `Saved to ${dl.path}` : ''; }
+  else if (dl.status === 'done') {
+    b.style.display = 'none';
+    const mac = navigator.platform.startsWith('Mac');
+    $('updprog').textContent = dl.restartable ? 'Installed.' : (mac ? 'Drag the new app over the old one in Applications, then:' : (dl.path ? `Saved to ${dl.path}` : ''));
+    $('btn-upd-restart').style.display = dl.restartable ? '' : 'none';
+    $('btn-upd-quit').style.display = (!dl.restartable && mac) ? '' : 'none';
+  }
   else if (dl.status === 'error') { b.disabled = false; b.textContent = 'Retry'; $('updprog').textContent = dl.error; }
   else { b.disabled = !u.asset; b.textContent = u.asset ? 'Download' : 'Open release page'; $('updprog').textContent = ''; }
 }
@@ -390,7 +398,7 @@ async function refresh() {
   }
   // busy / progress
   const p = state.progress, busy = state.busy === 'dot' ? null : state.busy;
-  document.querySelectorAll('button.act:not(.stop), .jog button').forEach(b => b.disabled = (!!busy || !state.connected) && !['btn-connect','btn-connect2','btn-go-cancel','btn-quit','btn-inst','btn-upd'].includes(b.id));
+  document.querySelectorAll('button.act:not(.stop), .jog button').forEach(b => b.disabled = (!!busy || !state.connected) && !['btn-connect','btn-connect2','btn-go-cancel','btn-quit','btn-inst','btn-upd','btn-upd-restart','btn-upd-quit'].includes(b.id));
   $('btn-stop').disabled = !state.busy;
   dotOn = !!state.dot_on; $('dotbtn').classList.toggle('on', dotOn);
   if (busy) { $('bar').style.width = p.pct + '%'; $('progress').textContent = `${busy === 'run' ? 'Burning' : busy === 'frame' ? 'Outline' : 'Test grid'}: ${p.pct}% · about ${Math.ceil(p.eta_s/60)} min left`; }
@@ -503,6 +511,8 @@ $('lnk-rescan').onclick = async () => { const r = await api('fonts-rescan', {});
 $('btn-upd').onclick = async () => { const u = state.update || {}; if (!u.asset) { window.open(u.url, '_blank'); return; } await api('update-download', {}); refresh(); };
 $('btn-inst').onclick = async () => { const b = $('btn-inst'); b.disabled = true; b.textContent = 'Adding…'; try { await api('linux-install', {}); $('insttext').textContent = 'Done — Jeengar Emboss is in your apps menu. You can delete the copy in Downloads.'; b.style.display = 'none'; setTimeout(() => { instHidden = true; $('instbar').style.display = 'none'; }, 6000); } catch (e) { b.disabled = false; b.textContent = 'Retry'; $('insttext').textContent = e.message; } };
 $('inst-hide').onclick = () => { instHidden = true; $('instbar').style.display = 'none'; };
+$('btn-upd-restart').onclick = async () => { $('btn-upd-restart').disabled = true; try { await api('restart', {}); } catch (e) { $('updprog').textContent = e.message; $('btn-upd-restart').disabled = false; return; } document.body.innerHTML = '<p style="padding:40px;font:18px Raleway">Restarting Jeengar Emboss… this window will close.</p>'; };
+$('btn-upd-quit').onclick = () => $('btn-quit').click();
 $('upd-hide').onclick = () => { updHidden = true; $('updbar').style.display = 'none'; };
 $('btn-quit').onclick = async () => { if (!confirm('Quit Jeengar Emboss?')) return; try { await api('quit', {}); } catch (e) { $('error').textContent = e.message; return; } document.body.innerHTML = '<p style="padding:40px;font:18px Raleway">Jeengar Emboss has quit.</p>'; };
 $('btn-preset-del').onclick = async () => {
