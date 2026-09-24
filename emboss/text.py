@@ -43,6 +43,7 @@ GROUPS = {
                    "Yatra One", "Hind", "Mukta", "Karma", "Kalam", "Baloo 2"],
 }
 DEVANAGARI_FALLBACK = "Noto Serif Devanagari"
+SYMBOL_FALLBACKS = ("Noto Sans Symbols", "Noto Sans Symbols 2")   # stars, crowns, flowers, suns, ticks
 EMOJI_FALLBACK = "Noto Emoji"
 
 # legacy slugs from the first version
@@ -165,8 +166,9 @@ def grouped() -> list[dict]:
         seen.update(n for n in names if n in idx)
         if fs:
             out.append({"group": g, "fonts": fs})
+    hidden = set(SYMBOL_FALLBACKS) | {EMOJI_FALLBACK}
     extra = [{"family": n, "weights": sorted(v["weights"])} for n, v in idx.items()
-             if n not in seen and v["source"] == "bundled" and n != EMOJI_FALLBACK]
+             if n not in seen and v["source"] == "bundled" and n not in hidden]
     if extra:
         out.append({"group": "Other", "fonts": extra})
         seen.update(f["family"] for f in extra)
@@ -254,10 +256,11 @@ def render(text: str, font: str = "Libre Bodoni", weight: int = 400, align: str 
             chain.append(dev)
     except ValueError:
         pass
-    try:
-        chain.append(font_path(EMOJI_FALLBACK))
-    except ValueError:
-        pass
+    for fam in SYMBOL_FALLBACKS + (EMOJI_FALLBACK,):
+        try:
+            chain.append(font_path(fam))
+        except ValueError:
+            pass
     fonts = {p: ImageFont.truetype(str(p), int(EM_PX * (0.92 if p.stem.startswith("NotoEmoji") else 1.0)))
              for p in chain}
     lines = text.replace("\\n", "\n").split("\n")
