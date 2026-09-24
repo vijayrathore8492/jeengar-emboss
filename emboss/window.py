@@ -50,4 +50,5 @@ def run(url: str, on_close=None) -> None:
         threading.Timer(0.3, lambda: os._exit(0)).start()
 
     w.events.closed += closed
-    webview.start(func=_dock_icon, private_mode=False, icon=str(ICON) if ICON.exists() else None)
+    gui = "qt" if sys.platform.startswith("linux") else None   # Linux: bundled Qt WebEngine, never host GTK
+    webview.start(func=_dock_icon, gui=gui, private_mode=False, icon=str(ICON) if ICON.exists() else None)

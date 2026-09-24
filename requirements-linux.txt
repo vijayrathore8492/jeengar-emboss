@@ -1,0 +1,4 @@
+# Linux only: the app window uses Qt WebEngine (self-contained; WebKitGTK from the host is not used)
+PyQt6>=6.6
+PyQt6-WebEngine>=6.6
+qtpy>=2.4

@@ -37,7 +37,7 @@ Download from the [latest release](https://github.com/vijayrathore8492/jeengar-e
 |---|---|---|
 | macOS (Apple Silicon) | `JeengarEmboss-<v>-mac-arm64.dmg` | Drag to Applications. The app is not notarised: right-click → **Open** → Open, once. |
 | Windows 10/11 | `JeengarEmboss-<v>-windows-setup.exe` | Run it: Next → Next → Finish. Start Menu and desktop icon, Add/Remove Programs entry. SmartScreen: *More info → Run anyway*, once. Older Falcons need the CH340 USB driver. (A plain `.zip` is also there if you prefer no installer.) |
-| Linux (x86-64) | `JeengarEmboss-<v>-linux-x86_64.AppImage` | One file: `chmod +x`, double-click. WebKitGTK is bundled. `sudo usermod -aG dialout $USER`, log out and in. (`.tar.gz` also available.) |
+| Linux (x86-64) | `JeengarEmboss-<v>-linux-x86_64.AppImage` | One file: `chmod +x`, double-click (needs `libfuse2` on distros without it, e.g. `sudo apt install libfuse2`). The window engine (Qt WebEngine) is bundled, ~200 MB. `sudo usermod -aG dialout $USER`, log out and in. (`.tar.gz` also available.) |
 
 Nothing else to install — Python and every library are inside the bundle.
 

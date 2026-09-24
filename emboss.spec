@@ -34,13 +34,10 @@ hiddenimports = [
     "webview.platforms.gtk", "clr", "clr_loader",
 ]
 if sys.platform.startswith("linux"):
-    # bundle GTK + WebKitGTK when PyGObject is present, so the AppImage gets the app window
-    try:
-        import gi  # noqa: F401
-        hiddenimports += ["gi", "gi.repository.GLib", "gi.repository.GObject", "gi.repository.Gio",
-                          "gi.repository.Gtk", "gi.repository.Gdk", "gi.repository.WebKit2", "gi.repository.Soup"]
-    except ImportError:
-        pass
+    # Linux window = Qt WebEngine, fully bundled (host GTK/WebKit is never touched: mixing
+    # a bundled typelib with the distro's libwebkit2gtk broke on Zorin).
+    hiddenimports += ["webview.platforms.qt", "qtpy", "PyQt6", "PyQt6.QtCore", "PyQt6.QtGui", "PyQt6.QtWidgets",
+                      "PyQt6.QtWebEngineWidgets", "PyQt6.QtWebEngineCore", "PyQt6.QtWebChannel", "PyQt6.QtNetwork"]
 
 a = Analysis(
     [str(HERE / "emboss.py")],
@@ -48,7 +45,10 @@ a = Analysis(
     binaries=[],
     datas=datas,
     hiddenimports=hiddenimports,
-    excludes=["tkinter", "matplotlib", "scipy", "pandas", "IPython", "pytest"],
+    excludes=["tkinter", "matplotlib", "scipy", "pandas", "IPython", "pytest",
+              "PyQt6.QtQml", "PyQt6.QtQuick", "PyQt6.QtQuick3D", "PyQt6.QtMultimedia", "PyQt6.QtBluetooth",
+              "PyQt6.QtPositioning", "PyQt6.QtSensors", "PyQt6.QtSerialPort", "PyQt6.QtSql", "PyQt6.QtTest",
+              "PyQt6.QtDesigner", "PyQt6.QtHelp", "PyQt6.QtPdf", "PyQt6.QtPdfWidgets", "PyQt6.QtSvgWidgets"],
     noarchive=False,
 )
 pyz = PYZ(a.pure)
