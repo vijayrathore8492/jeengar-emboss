@@ -82,6 +82,12 @@ details.adv{border-top:1px solid var(--line);padding-top:10px;margin-top:14px}
   <span style="flex:1"></span>
   <a id="upd-hide" style="color:var(--mut);cursor:pointer;font-size:13px">later</a>
 </div>
+<div id="instbar" style="display:none;background:#eef5ee;border-bottom:1px solid #9fc7a8;padding:9px 22px;font-size:14px;align-items:center;gap:14px">
+  <span id="insttext">Add Jeengar Emboss to your apps menu? It will be copied to ~/Applications and appear in the launcher; updates then replace it in place.</span>
+  <button class="act primary" id="btn-inst" style="padding:6px 12px;font-size:13px">Add to apps menu</button>
+  <span style="flex:1"></span>
+  <a id="inst-hide" style="color:var(--mut);cursor:pointer;font-size:13px">not now</a>
+</div>
 <main>
 <div>
   <div class="card">
@@ -296,7 +302,12 @@ function fill(sel, items, keep) {
 
 const EMOJI = ['♥','❤','♡','★','☆','✦','✧','✿','❀','❁','❃','✤','⚜','♛','♕','♚','♔','☼','☾','☽','✝','☮','☯','ॐ','∞','✓','†','‡','•','·','—','«','»','“','”','‘','’','№','©','®','™','°','₹','€','£','$','🐪','🐫','🐘','🦚','🐎','🦁','🐅','🌸','🪷','🌿','🍃','🌙','☀️','⭐','✨','🪔','🕉️','🏹','⚔️','🛡️','👑','💍','🎁','🎂','🎉','🎈','🎓','✈️','⚓','🏔️','🌊','🔥','💧','🍀','🌹','🌻','🌷','🎵','🎶','☕','🍷','📍','🏠','🔑','💼','🐾','🐕','🐈','🐦','🦋','🐝','🐢','🐬','🦅','🦌','🦊'];
 let lastFontSig = '';
-let updHidden = false;
+let updHidden = false, instHidden = false;
+function renderInstall(li) {
+  const bar = $('instbar');
+  if (!li || !li.applicable || li.installed || instHidden) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+}
 function renderUpdate(u) {
   const bar = $('updbar'); const dl = u.download || {};
   if (!u.newer || updHidden) { bar.style.display = 'none'; return; }
@@ -369,7 +380,7 @@ async function refresh() {
   $('log').textContent = (state.log || []).join('\n');
   const u = state.update || {};
   $('version-text').innerHTML = `Jeengar Emboss ${u.version}` + (u.newer ? ` &nbsp;·&nbsp; <a href="${u.url}" target="_blank" style="color:var(--brand)">version ${u.latest} is available</a>` : u.checked && !u.error ? ' · up to date' : '');
-  renderUpdate(u);
+  renderUpdate(u); renderInstall(state.linux_install);
   if (state.connected) { $('ov_speed').max = s['110'] || 10000; $('c_speed').max = s['110'] || 10000; $('width').max = Math.min(380, (s['130'] || 400) - 20); }
   renderTones();
   // auto-connect once, when a laser-looking port is there
@@ -490,6 +501,8 @@ $('fontfile').onchange = async () => {
 $('lnk-fontsfolder').onclick = () => api('open-fonts-folder', {}).catch(e => $('fontmsg').textContent = e.message);
 $('lnk-rescan').onclick = async () => { const r = await api('fonts-rescan', {}); $('fontmsg').textContent = `${r.families} font families`; refresh(); };
 $('btn-upd').onclick = async () => { const u = state.update || {}; if (!u.asset) { window.open(u.url, '_blank'); return; } await api('update-download', {}); refresh(); };
+$('btn-inst').onclick = async () => { const b = $('btn-inst'); b.disabled = true; b.textContent = 'Adding…'; try { await api('linux-install', {}); $('insttext').textContent = 'Done — Jeengar Emboss is in your apps menu. You can delete the copy in Downloads.'; b.style.display = 'none'; setTimeout(() => { instHidden = true; $('instbar').style.display = 'none'; }, 6000); } catch (e) { b.disabled = false; b.textContent = 'Retry'; $('insttext').textContent = e.message; } };
+$('inst-hide').onclick = () => { instHidden = true; $('instbar').style.display = 'none'; };
 $('upd-hide').onclick = () => { updHidden = true; $('updbar').style.display = 'none'; };
 $('btn-quit').onclick = async () => { if (!confirm('Quit Jeengar Emboss?')) return; try { await api('quit', {}); } catch (e) { $('error').textContent = e.message; return; } document.body.innerHTML = '<p style="padding:40px;font:18px Raleway">Jeengar Emboss has quit.</p>'; };
 $('btn-preset-del').onclick = async () => {

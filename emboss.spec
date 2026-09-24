@@ -23,7 +23,7 @@ for p in sorted((HERE / "assets" / "fonts").glob("*.[to]tf")):
 
 hiddenimports = [
     "emboss.server", "emboss.cli", "emboss.artwork", "emboss.gcode", "emboss.grbl",
-    "emboss.materials", "emboss.text", "emboss.paths", "emboss.update",
+    "emboss.materials", "emboss.text", "emboss.paths", "emboss.update", "emboss.linux_install",
     "serial.tools.list_ports",
     "serial.tools.list_ports_posix", "serial.tools.list_ports_osx",
     "serial.tools.list_ports_linux", "serial.tools.list_ports_windows",

@@ -25,7 +25,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
 
-from . import artwork, gcode, text as textmod, update
+from . import artwork, gcode, text as textmod, update, linux_install
 from .materials import COLOUR_GROUPS, LEATHER_TYPES, Calibration, colour_group, key as cal_key, seed as seed_settings
 from .grbl import Grbl, GrblError, find_ports
 
@@ -427,7 +427,7 @@ class Handler(BaseHTTPRequestHandler):
                 "position": pos, "fonts": textmod.available(), "font_groups": textmod.grouped(), "leathers": list(LEATHER_TYPES),
                 "colours": COLOURS, "calibrated": sorted(cal.keys()),
                 "uploads": sorted(p.name for p in UPLOADS.glob("*")) if UPLOADS.exists() else [],
-                "update": update.status(),
+                "update": update.status(), "linux_install": linux_install.status(),
             })
         self.send_error(404)
 
@@ -546,6 +546,11 @@ class Handler(BaseHTTPRequestHandler):
                 S.g.abort()
         S.say("stop requested")
 
+    def api_linux_install(self, p):
+        r = linux_install.install()
+        S.say(f"added to the apps menu: {r.get('target')}")
+        return {"linux_install": r}
+
     def api_update_download(self, p):
         return {"download": update.download()}
 
@@ -593,6 +598,7 @@ def serve(port: int = 8765, open_browser: bool = True, window: bool = False) -> 
     when no web engine is available (some Linux boxes)."""
     paths.ensure()
     update.start()
+    linux_install.ensure_menu_entry_if_installed()
     threading.Thread(target=textmod.rescan, daemon=True).start()   # OS font scan, off the request path
     httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     url = f"http://127.0.0.1:{port}/"
