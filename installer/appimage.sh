@@ -23,6 +23,8 @@ cp "$DIR/jeengar-emboss.desktop" "$DIR/usr/share/applications/"
 cat > "$DIR/AppRun" <<'RUN'
 #!/usr/bin/env bash
 HERE="$(dirname "$(readlink -f "$0")")"
+export QTWEBENGINE_DISABLE_SANDBOX=1          # Chromium's sandbox cannot run from a FUSE mount
+export QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox ${QTWEBENGINE_CHROMIUM_FLAGS:-}"
 exec "$HERE/usr/bin/Jeengar Emboss" "$@"
 RUN
 chmod +x "$DIR/AppRun"
