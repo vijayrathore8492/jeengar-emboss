@@ -7,6 +7,9 @@ APP="Jeengar Emboss"
 DIR="AppDir"
 rm -rf "$DIR"; mkdir -p "$DIR/usr/bin" "$DIR/usr/share/applications" "$DIR/usr/share/icons/hicolor/512x512/apps"
 cp -r "dist/$APP/." "$DIR/usr/bin/"
+rm -f "$DIR"/usr/bin/_internal/libstdc++.so.* "$DIR"/usr/bin/_internal/libgcc_s.so.* \
+      "$DIR"/usr/bin/_internal/libGL.so.* "$DIR"/usr/bin/_internal/libEGL.so.* "$DIR"/usr/bin/_internal/libgbm.so.* \
+      "$DIR"/usr/bin/_internal/libdrm.so.* "$DIR"/usr/bin/_internal/libglapi.so.* 2>/dev/null || true
 cp assets/icon.png "$DIR/usr/share/icons/hicolor/512x512/apps/jeengar-emboss.png"
 cp assets/icon.png "$DIR/jeengar-emboss.png"
 cat > "$DIR/jeengar-emboss.desktop" <<DESK
@@ -24,7 +27,12 @@ cat > "$DIR/AppRun" <<'RUN'
 #!/usr/bin/env bash
 HERE="$(dirname "$(readlink -f "$0")")"
 export QTWEBENGINE_DISABLE_SANDBOX=1          # Chromium's sandbox cannot run from a FUSE mount
-export QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox ${QTWEBENGINE_CHROMIUM_FLAGS:-}"
+# A laser UI needs no GPU: software rendering under X11 works on every laptop, Wayland or not.
+export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-xcb}"
+export QT_OPENGL=software
+export QT_QUICK_BACKEND=software
+export LIBGL_ALWAYS_SOFTWARE=1
+export QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox --disable-gpu --disable-gpu-compositing ${QTWEBENGINE_CHROMIUM_FLAGS:-}"
 exec "$HERE/usr/bin/Jeengar Emboss" "$@"
 RUN
 chmod +x "$DIR/AppRun"

@@ -53,6 +53,14 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 
+if sys.platform.startswith("linux"):
+    # Never ship these: they must come from the host or they shadow newer system copies and
+    # break the distro's GPU/driver stack (seen on Zorin: GLIBCXX_3.4.32 not found).
+    _HOST_ONLY = ("libstdc++.so", "libgcc_s.so", "libGL.so", "libGLX.so", "libEGL.so", "libgbm.so", "libdrm.so",
+                  "libglapi.so", "libGLdispatch.so", "libglib-2.0.so", "libgio-2.0.so", "libgobject-2.0.so",
+                  "libgmodule-2.0.so", "libdbus-1.so", "libasound.so", "libpulse.so", "libfontconfig.so")
+    a.binaries = [b for b in a.binaries if not any(Path(b[0]).name.startswith(h) for h in _HOST_ONLY)]
+
 if sys.platform == "darwin":
     icon = str(HERE / "assets" / "icon.icns")
 elif sys.platform.startswith("win"):
