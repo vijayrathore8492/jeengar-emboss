@@ -65,6 +65,9 @@ details.adv{border-top:1px solid var(--line);padding-top:10px;margin-top:14px}
 .pill.ok{background:#dff1e5;color:var(--ok)}
 .grid-legend{font:12px ui-monospace,Menlo,monospace;white-space:pre;margin-top:8px}
 .small{font-size:12.5px;color:var(--mut)}
+.size{display:flex;gap:8px;align-items:flex-end}.size>div{flex:1}.size .small{display:block;margin-bottom:3px}
+#btn-lock{flex:0 0 auto;width:40px;height:38px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--mut);cursor:pointer;display:flex;align-items:center;justify-content:center}
+#btn-lock.on{background:var(--brand);border-color:var(--brand);color:#fff}
 </style>
 </head>
 <body>
@@ -122,8 +125,13 @@ details.adv{border-top:1px solid var(--line);padding-top:10px;margin-top:14px}
       <select id="file"></select>
       <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="invert" style="width:auto"> Light artwork on dark background (invert)</label>
     </div>
-    <label>Width on the leather (mm)</label>
-    <input type="number" id="width" value="45" min="5" max="380" step="1">
+    <label>Size on the leather (mm)</label>
+    <div class="size">
+      <div><span class="small">Width</span><input type="number" id="width" value="45" min="2" max="380" step="0.5"></div>
+      <button id="btn-lock" class="on" title="Keep proportions"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path id="lock-shackle" d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></button>
+      <div><span class="small">Height</span><input type="number" id="height" value="" min="2" max="380" step="0.5"></div>
+    </div>
+    <div class="hint" id="size-hint"></div>
   </div>
 
   <div class="card">
@@ -269,12 +277,25 @@ const groupOf = c => groups.light.includes(c) ? 'light' : groups.dark.includes(c
 const keyOf = () => `${$('leather').value}/${groupOf($('colour').value)}`;
 const mem = (k, v) => { try { if (v === undefined) return localStorage.getItem('emboss.' + k); localStorage.setItem('emboss.' + k, v); } catch (e) {} };
 
+let sizeLocked = mem('lock') !== '0', sizeBy = mem('sizeBy') === 'height' ? 'height' : 'width';
+function sizeParams() {
+  const w = clampIn('width'), h = $('height').value === '' ? 0 : clampIn('height');
+  if (!sizeLocked && w && h) return {width: w, height: h};           // stretch to exactly this
+  return sizeBy === 'height' && h ? {height: h} : {width: w};        // the other side follows
+}
+function renderLock() {
+  $('btn-lock').className = sizeLocked ? 'on' : '';
+  $('btn-lock').title = sizeLocked ? 'Proportions locked: click to set width and height separately' : 'Proportions unlocked: click to lock';
+  $('lock-shackle').setAttribute('d', sizeLocked ? 'M8 11V7a4 4 0 0 1 8 0v4' : 'M8 11V7a4 4 0 0 1 7.5-2');
+  $('size-hint').textContent = sizeLocked ? 'Proportions locked: type either one, the other follows.'
+    : 'Unlocked: width and height are set separately. The artwork is stretched to fit.';
+}
 function params(extra) {
   const ov = {power: clampIn('ov_power'), speed: clampIn('ov_speed'), lines_per_mm: clampIn('ov_lpm'), passes: clampIn('ov_passes'), mode: $('ov_mode').value};
   return Object.assign({
     source, text: $('text').value, font: $('font').value, weight: +$('weight').value || 400, align: $('align').value,
     letter_spacing: +$('letter_spacing').value, file: $('file').value, invert: $('invert').checked,
-    width: +$('width').value, leather: $('leather').value, colour: $('colour').value, preset: tone,
+    ...sizeParams(), leather: $('leather').value, colour: $('colour').value, preset: tone,
     anchor: $('anchor').value, x: +$('x').value, y: +$('y').value, center: $('center').value === '1',
     overrides: ov, frame_first: $('frame_first').checked,
   }, extra || {});
@@ -284,6 +305,7 @@ async function preview() {
   try {
     const r = await api('preview', params());
     $('preview').innerHTML = `<img src="data:image/png;base64,${r.png}" style="width:${Math.min(100, r.width_mm*2)}%">`;
+    if (sizeLocked) { const other = sizeBy === 'width' ? 'height' : 'width'; if (document.activeElement !== $(other)) $(other).value = r[other + '_mm']; mem(other, r[other + '_mm']); }
     const s = r.settings;
     $('summary').innerHTML = `
       <b>Mark</b><span>${r.width_mm} × ${r.height_mm} mm</span>
@@ -374,7 +396,7 @@ async function refresh() {
     renderWeights($('weight').value || mem('weight'));
     if (!$('leather').options.length) {
       fill($('leather'), state.leathers); fill($('colour'), state.colours);
-      $('leather').value = mem('leather') || 'veg-tan'; $('colour').value = mem('colour') || 'dark-olive'; $('width').value = mem('width') || 45;
+      $('leather').value = mem('leather') || 'veg-tan'; $('colour').value = mem('colour') || 'dark-olive'; $('width').value = mem('width') || 45; $('height').value = mem('height') || ''; renderLock();
     }
     if (mem('source') === 'file') $('tab-file').click();
     schedulePreview();
@@ -389,7 +411,7 @@ async function refresh() {
   const u = state.update || {};
   $('version-text').innerHTML = `Jeengar Emboss ${u.version}` + (u.newer ? ` &nbsp;·&nbsp; <a href="${u.url}" target="_blank" style="color:var(--brand)">version ${u.latest} is available</a>` : u.checked && !u.error ? ' · up to date' : '');
   renderUpdate(u); renderInstall(state.linux_install);
-  if (state.connected) { $('ov_speed').max = s['110'] || 10000; $('c_speed').max = s['110'] || 10000; $('width').max = Math.min(380, (s['130'] || 400) - 20); }
+  if (state.connected) { $('ov_speed').max = s['110'] || 10000; $('c_speed').max = s['110'] || 10000; $('width').max = Math.min(380, (s['130'] || 400) - 20); $('height').max = Math.min(380, (s['131'] || 400) - 20); }
   renderTones();
   // auto-connect once, when a laser-looking port is there
   if (!state.connected && !autoConnected && !state.notice) {
@@ -410,11 +432,15 @@ async function refresh() {
 // wiring
 $('tab-text').onclick = () => { source='text'; mem('source','text'); $('tab-text').className='on'; $('tab-file').className=''; $('pane-text').style.display=''; $('pane-file').style.display='none'; schedulePreview(); };
 $('tab-file').onclick = () => { source='file'; mem('source','file'); $('tab-file').className='on'; $('tab-text').className=''; $('pane-file').style.display=''; $('pane-text').style.display='none'; schedulePreview(); };
-['text','align','letter_spacing','file','invert','width','anchor','center','x','y']
+['text','align','letter_spacing','file','invert','anchor','center','x','y']
   .forEach(id => { $(id).addEventListener('input', schedulePreview); $(id).addEventListener('change', schedulePreview); });
 ['ov_power','ov_speed','ov_lpm','ov_passes','ov_mode'].forEach(id => { $(id).addEventListener('input', () => { renderEditLinks(); schedulePreview(); }); $(id).addEventListener('change', () => { if (id !== 'ov_mode') clampBox(id); renderEditLinks(); schedulePreview(); }); });
 ['leather','colour'].forEach(id => $(id).addEventListener('change', () => { mem(id, $(id).value); tone=''; toneVals=null; renderTones(); schedulePreview(); }));
-$('width').addEventListener('change', () => mem('width', $('width').value));
+['width','height'].forEach(id => {
+  $(id).addEventListener('input', () => { if (sizeLocked) { sizeBy = id; mem('sizeBy', id); } schedulePreview(); });
+  $(id).addEventListener('change', () => { if ($(id).value !== '') clampBox(id); mem(id, $(id).value); schedulePreview(); });
+});
+$('btn-lock').onclick = () => { sizeLocked = !sizeLocked; mem('lock', sizeLocked ? '1' : '0'); if (sizeLocked) { sizeBy = 'width'; mem('sizeBy', 'width'); } renderLock(); schedulePreview(); };
 $('emojibox').innerHTML = EMOJI.map(e => `<span style="cursor:pointer;padding:2px 5px;border-radius:6px" onmouseover="this.style.background='#f1e9dc'" onmouseout="this.style.background=''">${e}</span>`).join('');
 $('btn-emoji').onclick = () => { const b = $('emojibox'); b.style.display = b.style.display === 'none' ? '' : 'none'; $('btn-emoji').className = b.style.display === 'none' ? '' : 'on'; };
 $('emojibox').addEventListener('click', e => {

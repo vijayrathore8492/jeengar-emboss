@@ -129,7 +129,8 @@ def art_source(args):
 def build_art_job(args, st: Settings, s_max: int, accel: float, title: str,
                   g: Grbl | None = None) -> tuple[gcode.Job, artwork.Bitmap, float, float, str]:
     src, _ = art_source(args)
-    bm = artwork.load(src, args.width, st.lines_per_mm, invert=getattr(args, "invert", False))
+    bm = artwork.load(src, args.width, st.lines_per_mm, invert=getattr(args, "invert", False),
+                      height_mm=getattr(args, "height", None))
     x0, y0, osrc = origin(g, args, bm.width_mm, bm.height_mm)
     over = gcode.overscan_mm(st.speed, accel)
     job = gcode.Job()
@@ -236,7 +237,7 @@ def cmd_preview(args):
 def cmd_frame(args):
     st, _ = resolve_settings(args)
     src, _ = art_source(args)
-    bm = artwork.load(src, args.width, st.lines_per_mm)
+    bm = artwork.load(src, args.width, st.lines_per_mm, height_mm=getattr(args, "height", None))
     g = connect(args)
     try:
         s_max, accel, rapid, _ = machine_params(g, args)
@@ -444,7 +445,8 @@ def _art(p):
     p.add_argument("--align", choices=("left", "center", "right"), default="center")
     p.add_argument("--letter-spacing", type=float, default=0.0, dest="letter_spacing",
                    help="extra tracking in em, e.g. 0.1 for spaced capitals")
-    p.add_argument("--width", type=float, required=True, help="ink width in mm")
+    p.add_argument("--width", type=float, help="ink width in mm (height follows the proportions)")
+    p.add_argument("--height", type=float, help="ink height in mm (width follows); give both to stretch")
     p.add_argument("--invert", action="store_true", help="artwork is light-on-dark")
 
 
@@ -510,6 +512,8 @@ def main(argv=None):
     if not argv:
         argv = ["ui"]
     args = ap.parse_args(argv)
+    if hasattr(args, "width") and hasattr(args, "height") and not (args.width or args.height):
+        ap.error("give --width or --height (both = stretch to that exact size)")
     args.fn(args)
 
 

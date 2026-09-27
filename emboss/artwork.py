@@ -72,45 +72,55 @@ def _ink_bbox(gray: Image.Image, threshold: int = 250) -> tuple[int, int, int, i
     return int(cols[0]), int(rows[0]), int(cols[-1]) + 1, int(rows[-1]) + 1
 
 
-def load(path: "str | Path | Image.Image", width_mm: float, lines_per_mm: float,
-         invert: bool = False) -> Bitmap:
-    """`path` may be a PNG/SVG path or an already-rendered PIL image (text)."""
+def load(path: "str | Path | Image.Image", width_mm: float | None, lines_per_mm: float,
+         invert: bool = False, height_mm: float | None = None) -> Bitmap:
+    """`path` may be a PNG/SVG path or an already-rendered PIL image (text).
+
+    Size of the INK (the canvas is ignored):
+      width only   -> height follows the artwork's proportions
+      height only  -> width follows the artwork's proportions
+      both         -> stretched to exactly width x height
+    """
+    if not width_mm and not height_mm:
+        raise ValueError("give a width or a height")
     if not isinstance(path, Image.Image):
         path = Path(path)
     pitch = 1.0 / lines_per_mm
-    target_cols = max(1, int(round(width_mm / pitch)))
-    ss_cols = target_cols * SUPERSAMPLE
+    is_svg = not isinstance(path, Image.Image) and path.suffix.lower() == ".svg"
 
-    if isinstance(path, Image.Image):
-        im = _flatten(path)
-        if invert:
-            im = ImageOps.invert(im)
-        x0, y0, x1, y1 = _ink_bbox(im)
-        im = im.crop((x0, y0, x1, y1))
-    elif path.suffix.lower() == ".svg":
-        # Render generously, crop to ink, then re-render at the exact size so
-        # the ink (not the canvas) is `width_mm` wide.
+    if is_svg:
         probe = _flatten(_render_svg(path, 2000))
         x0, y0, x1, y1 = _ink_bbox(probe)
         ink_frac = (x1 - x0) / probe.width
-        full = _flatten(_render_svg(path, int(round(ss_cols / ink_frac))))
-        x0, y0, x1, y1 = _ink_bbox(full)
-        im = full.crop((x0, y0, x1, y1))
+        aspect = (y1 - y0) / (x1 - x0)                      # height / width of the ink
     else:
-        im = _flatten(Image.open(path))
+        im = _flatten(path if isinstance(path, Image.Image) else Image.open(path))
         if invert:
             im = ImageOps.invert(im)
         x0, y0, x1, y1 = _ink_bbox(im)
         im = im.crop((x0, y0, x1, y1))
+        aspect = im.height / im.width
 
-    if invert and not isinstance(path, Image.Image) and path.suffix.lower() == ".svg":
-        im = ImageOps.invert(im)
+    if not width_mm:
+        width_mm = height_mm / aspect
+    target_cols = max(1, int(round(width_mm / pitch)))
+    ss_cols = target_cols * SUPERSAMPLE
 
-    # scale ink to ss_cols wide, keep aspect
-    ss_rows = max(1, int(round(im.height * ss_cols / im.width)))
+    if is_svg:
+        # Re-render at the exact size so the ink (not the canvas) is `width_mm` wide.
+        full = _flatten(_render_svg(path, int(round(ss_cols / ink_frac))))
+        x0, y0, x1, y1 = _ink_bbox(full)
+        im = full.crop((x0, y0, x1, y1))
+        if invert:
+            im = ImageOps.invert(im)
+
+    if height_mm:
+        rows = max(1, int(round(height_mm / pitch)))
+        ss_rows = rows * SUPERSAMPLE
+    else:
+        ss_rows = max(1, int(round(im.height * ss_cols / im.width)))
+        rows = max(1, int(round(ss_rows / SUPERSAMPLE)))
     im = im.resize((ss_cols, ss_rows), Image.LANCZOS)
-
-    rows = max(1, int(round(ss_rows / SUPERSAMPLE)))
     im = im.resize((target_cols, rows), Image.BOX)  # box filter = coverage
     gray = np.asarray(im, dtype=np.uint8)
 

@@ -198,7 +198,9 @@ def _ns(p: dict) -> SimpleNamespace:
         text=p.get("text") if p.get("source") == "text" else None,
         font=p.get("font", "Libre Bodoni"), weight=int(p.get("weight") or 400), align=p.get("align", "center"),
         letter_spacing=float(p.get("letter_spacing") or 0),
-        width=float(p["width"]), invert=bool(p.get("invert")),
+        width=float(p["width"]) if p.get("width") else None,
+        height=float(p["height"]) if p.get("height") else None,
+        invert=bool(p.get("invert")),
         leather=p["leather"], colour=p["colour"],
         power=ov.get("power"), speed=ov.get("speed"), lines_per_mm=ov.get("lines_per_mm"),
         passes=ov.get("passes"), mode=ov.get("mode"), threshold=None,
@@ -216,7 +218,7 @@ def build(p: dict, want_position: bool) -> dict:
     if args.text is None and args.art is None:
         raise ValueError("no artwork: type some text or choose a file")
     art, name = cli.art_source(args)
-    bm = artwork.load(art, args.width, st.lines_per_mm, invert=args.invert)
+    bm = artwork.load(art, args.width, st.lines_per_mm, invert=args.invert, height_mm=args.height)
 
     if args.x is not None and args.y is not None:
         ax, ay, osrc = float(args.x), float(args.y), "fixed X/Y"

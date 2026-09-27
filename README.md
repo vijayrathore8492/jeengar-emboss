@@ -12,8 +12,8 @@ software. Runs on macOS, Windows and Linux; no LightBurn, no Rayforge, no G-code
 ## What it does
 
 - **Text or artwork.** Type a name (any script the fonts cover, incl. Devanagari and emoji),
-  or drop a PNG / SVG. Dark pixels burn. You give the width in millimetres; the file's own
-  size is ignored.
+  or drop a PNG / SVG. Dark pixels burn. You give the width or the height in millimetres (the other
+  follows the proportions; unlock the padlock to set both and stretch). The file's own size is ignored.
 - **Leather-aware settings.** Choose the leather type and colour; the app proposes power,
   speed, line pitch and passes from saved *looks* (Light, Standard, Deep, …) that you
   calibrate once per leather with test cells. Every number stays editable, live, with the
@@ -59,7 +59,7 @@ elsewhere, e.g. a USB stick shared between laptops. It holds `calibration.json` 
 
 1. **What to emboss** — *Text* (font, weight, alignment, letter-spacing, a symbols & emoji
    picker) or *Logo or image* (PNG/SVG; tick *invert* for light artwork on a dark background).
-   Width in mm.
+   Size in mm: width or height, the other follows; unlock the padlock between them to set both.
 2. **Leather** — type (veg-tan, coated, suede) and colour. Pick a *look*; the four boxes
    below (power %, speed mm/min, lines/mm, passes) fill in and can be edited on the spot.
    *Mode*: **solid** for logos and text (every pixel burns at the set power), **shaded** for
@@ -151,7 +151,7 @@ python3 emboss.py test-grid --leather veg-tan --colour tan --speeds 8000,5000,30
 python3 emboss.py calibrate --leather veg-tan --colour tan --name Standard --power 30 --speed 4000
 ```
 
-`--power --speed --lines-per-mm --passes --mode --preset` override any run; `--x --y` place a
+`--height` instead of `--width` sizes by height; give both to stretch. `--power --speed --lines-per-mm --passes --mode --preset` override any run; `--x --y` place a
 job at fixed coordinates instead of the head position; `--center` anchors the artwork's centre.
 The CLI opens the port per command, so aim and run are not guaranteed to share an origin —
 that guarantee is the reason the window exists.
