@@ -1,5 +1,5 @@
 pyserial>=3.5
 pillow>=12.3.0
 numpy>=1.21
-fonttools>=4.30
+fonttools>=4.66.0
 pywebview>=6.2.1
